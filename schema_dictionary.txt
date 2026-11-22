@@ -1,0 +1,15 @@
+Shelter: ID (INTEGER), Name (TEXT), Address (TEXT), City (TEXT), State (TEXT), PhoneNumber (TEXT), Capacity (INTEGER)
+
+Pet: ID (INTEGER), Shelter_ID (INTEGER), Name (TEXT), Species (TEXT), Breed (TEXT), BirthDate (DATE), Sex (TEXT), AdoptionStatus (TEXT), DateTakenIn (DATE)
+
+Adopter: Email (TEXT), FirstName (TEXT), LastName (TEXT), Address (TEXT), PhoneNumber (TEXT)
+
+Application: ID (INTEGER), Pet_ID (INTEGER), Adopter_Email (TEXT), Shelter_ID (INTEGER), Status (TEXT), Date (DATE)
+
+Adoption: Application_ID (INTEGER), Pet_ID (INTEGER), Adopter_Email (TEXT), Shelter_ID (INTEGER), Status (TEXT), Date (DATE)
+
+MedicalRecords: Pet_ID (INTEGER), Date (DATE), Time (TIME), VaccinationStatus (TEXT), Notes (TEXT), Treatments (TEXT), Vet_ID (INTEGER)
+
+Staff: ID (INTEGER), Shelter_ID (INTEGER), Name (TEXT), Role (TEXT), Email (TEXT), PhoneNumber (TEXT)
+
+Transfer: Pet_ID (INTEGER), From_Shelter_ID (INTEGER), To_Shelter_ID (INTEGER), Date (DATE), Reason (TEXT)
