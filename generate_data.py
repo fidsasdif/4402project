@@ -13,7 +13,7 @@ TODAY = date(2026, 11, 22)  # fixed "today" so every run produces identical data
 FIRST_ID = 10001  # surrogate IDs start here so they're 5 digits
 
 # ---------- word lists ----------
-first_names = [
+FIRST_NAMES = [
     "Kevin",
     "Jessica",
     "Adithya",
@@ -48,7 +48,7 @@ first_names = [
     "Emerson",
     "Scott",
 ]
-last_names = [
+LAST_NAMES = [
     "Underwood",
     "Sonnier",
     "Stanley",
@@ -87,7 +87,7 @@ last_names = [
     "Antoine",
     "Albarran",
 ]
-cities = [
+CITIES = [
     "Baton Rouge",
     "Lafayette",
     "Hammond",
@@ -100,7 +100,7 @@ cities = [
     "New Orleans",
     "Houma",
 ]
-road_names = [
+ROAD_NAMES = [
     "Main St",
     "1st St",
     "2nd St",
@@ -150,8 +150,34 @@ road_names = [
     "Beech Rd",
     "Chestnut Ln",
 ]
-
-area_codes = ["225", "337", "504", "985"]
+AREA_CODES = ["225", "337", "504", "985"]
+SHELTER_ADJECTIVES = [
+    "Friendsip",
+    "Sunshine",
+    "Happy Place",
+    "Furrever",
+    "Lucky Paws",
+    "New Leash",
+    "Paws & Claws",
+    "Fountain of Hope",
+    "Golden Heart",
+    "Bright Futures",
+    "Riverbend",
+    "Magnolia",
+    "Cypress Grove",
+    "Live Oak",
+    "Gulf CoastLagniappe",
+]
+SHELTER_NOUNS = [
+    "Adoption Center",
+    "Animal Shelter",
+    "Pet Rescue",
+    "Animal Rescue",
+    "Vet and Adoption",
+    "Animal Sanctuary",
+    "Pet Haven",
+    "Animal Care Center",
+]
 
 
 # ---------- helpers ----------
@@ -161,7 +187,7 @@ def make_ids(n):
 
 
 def random_phone():
-    return f"{random.choice(area_codes)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
+    return f"{random.choice(AREA_CODES)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
 
 
 def random_date(start, end):
@@ -174,3 +200,30 @@ conn = sqlite3.connect(DB_PATH)
 conn.executescript(SCHEMA_PATH.read_text())
 conn.execute("PRAGMA foreign_keys = ON")
 
+# ---------- shelter ----------
+shelter_ids = make_ids(36)
+shelter_cities = random.sample(CITIES, len(shelter_ids))
+shelter_adjectives = random.sample(SHELTER_ADJECTIVES, len(shelter_ids))
+shelters = []
+
+for id, city, adjective in zip(shelter_ids, shelter_cities, shelter_adjectives):
+    name = f"{adjective} {random.choice(SHELTER_NOUNS)}"
+    shelters.append(
+        (
+            id,
+            name,
+            f"{random.randint(1000, 9999)} {random.choice(ROAD_NAMES)}",
+            city,
+            "LA",
+            random_phone(),
+            random.randint(15, 150),
+        )
+    )
+
+conn.executemany(
+    "INSERT INTO Shelter (ID, Name, Address, City, State, PhoneNumber, Capacity) VALUES (?, ?, ?, ?, ?, ?, ?)", shelters
+)
+
+conn.commit()
+conn.close()
+print("\nShelters: {len(shelters)}\n")
