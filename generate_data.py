@@ -12,9 +12,12 @@ SCHEMA_PATH = HERE / "schema.sql"
 TODAY = date(2026, 11, 22)  # fixed "today" so every run produces identical data
 FIRST_ID = 10001  # surrogate IDs start here so they're 5 digits
 NUM_SHELTERS = 36
-MIN_CAPACITY, MAX_CAPACITY = 15, 50
+MIN_CAPACITY, MAX_CAPACITY = 8, 30
+NUM_PETS = 800
 MAX_STEM_USES = 2  # a stem can appear on at most this many shelters
 STEM_REUSE_CHANCE = 0.2  # chance a shelter reuses a stem another city already has
+NUM_ADOPTERS = 300
+MAX_APPS_PER_ADOPTER = 3
 
 # ---------- word lists ----------
 FIRST_NAMES = [
@@ -150,7 +153,7 @@ CITY_INFO = {
     "Shreveport": (6, "318"),
     "Lafayette": (5, "337"),
     # medium
-    "Metarie": (4, "504"),
+    "Metairie": (4, "504"),
     "Lake Charles": (3, "337"),
     "Kenner": (2, "504"),
     "Bossier City": (2, "318"),
@@ -164,7 +167,7 @@ CITY_INFO = {
     "Mandeville": (1, "985"),
     "Prairieville": (1, "225"),
     "Gonzales": (1, "225"),
-    "St. Francesville": (1, "225"),
+    "St. Francisville": (1, "225"),
     "New Iberia": (1, "337"),
     "Ruston": (1, "318"),
     "Natchitoches": (1, "318"),
@@ -251,7 +254,7 @@ for s_id, city in zip(shelter_ids, shelter_cities):
     # stems this shelter may use: not used up, and not already used in this city
     allowed = [s for s in SHELTER_ADJECTIVES if stem_uses[s] < MAX_STEM_USES and s not in stems_in_city[city]]
     if not allowed:
-        raise ValueError(f"No stems left for a shelter in {city}: add more SHELTER ADJECTIVES")
+        raise ValueError(f"No stems left for a shelter in {city}: add more SHELTER_ADJECTIVES")
     fresh = [s for s in allowed if stem_uses[s] == 0]  # nobody has this stem yet
     reused = [s for s in allowed if stem_uses[s] > 0]  # another city has this stem
 
@@ -268,9 +271,9 @@ for s_id, city in zip(shelter_ids, shelter_cities):
     stems_in_city[city].add(stem)
     used_names.add(name)
 
-    # bigger city -> bigger shelter (weight 1 ~ 19, weight 8 ~ 47), clamped to 15-50
+    # bigger city -> bigger shelter (weight 1 ~ 8, weight 8 ~ 29), clamped to 8-30
     weight = CITY_INFO[city][0]
-    capacity = max(MIN_CAPACITY, min(MAX_CAPACITY, 15 + 4 * weight + random.randint(-5, 5)))
+    capacity = max(MIN_CAPACITY, min(MAX_CAPACITY, 5 + 3 * weight + random.randint(-3, 3)))
     shelters.append(
         (
             s_id,
