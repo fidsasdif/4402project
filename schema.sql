@@ -56,15 +56,9 @@ CREATE TABLE Application (
 
 CREATE TABLE Adoption (
     Application_ID INTEGER PRIMARY KEY,
-    Pet_ID INTEGER NOT NULL,
-    Adopter_Email TEXT NOT NULL,
-    Shelter_ID INTEGER NOT NULL,
-    Status TEXT NOT NULL,
     Date DATE NOT NULL,
-    FOREIGN KEY (Application_ID) REFERENCES Application(ID),
-    FOREIGN KEY (Pet_ID) REFERENCES Pet(ID),
-    FOREIGN KEY (Adopter_Email) REFERENCES Adopter(Email),
-    FOREIGN KEY (Shelter_ID) REFERENCES Shelter(ID)
+    Fee REAL NOT NULL,
+    FOREIGN KEY (Application_ID) REFERENCES Application(ID)
 );
 
 CREATE TABLE MedicalRecords (
@@ -96,7 +90,7 @@ CREATE TABLE Transfer (
     To_Shelter_ID INTEGER NOT NULL,
     Date DATE NOT NULL,
     Reason TEXT,
-    PRIMARY KEY (Pet_ID, From_Shelter_ID, To_Shelter_ID),
+    PRIMARY KEY (Pet_ID, From_Shelter_ID, To_Shelter_ID, Date),
     FOREIGN KEY (Pet_ID) REFERENCES Pet(ID),
     FOREIGN KEY (From_Shelter_ID) REFERENCES Shelter(ID),
     FOREIGN KEY (To_Shelter_ID) REFERENCES Shelter(ID)

@@ -6,7 +6,7 @@ Adopter: Email (TEXT), FirstName (TEXT), LastName (TEXT), Address (TEXT), PhoneN
 
 Application: ID (INTEGER), Pet_ID (INTEGER), Adopter_Email (TEXT), Shelter_ID (INTEGER), Status (TEXT), Date (DATE)
 
-Adoption: Application_ID (INTEGER), Pet_ID (INTEGER), Adopter_Email (TEXT), Shelter_ID (INTEGER), Status (TEXT), Date (DATE)
+Adoption: Application_ID (INTEGER), Date (DATE), Fee (REAL)
 
 MedicalRecords: Pet_ID (INTEGER), Date (DATE), Time (TIME), VaccinationStatus (TEXT), Notes (TEXT), Treatments (TEXT), Vet_ID (INTEGER)
 
