@@ -365,6 +365,7 @@ SHELTER_NOUNS = [
     "Pet Haven",
     "Animal Care Center",
 ]
+EMAIL_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "lsu.edu"]
 
 
 # ---------- helpers ----------
@@ -428,7 +429,7 @@ for s_id, city in zip(shelter_ids, shelter_cities):
         (
             s_id,
             name,
-            f"{random.randint(1000, 9999)} {random.choice(ROAD_NAMES)}",
+            f"{random.randint(100, 9999)} {random.choice(ROAD_NAMES)}",
             city,
             "LA",
             random_phone(city),
@@ -444,7 +445,30 @@ conn.executemany(
 # shelters end up overcrowded. Not stored in the database: the Pet section uses it to choose intake shelters.
 shelter_intake_weights = [s[6] * random.lognormvariate(0, 0.5) for s in shelters]
 
+
+# ---------- adopter ----------
+adopters = []
+used_emails = set()  # Email is Adopter's primary key, so it must be unique
+while len(adopters) < NUM_ADOPTERS:
+    first = random.choice(FIRST_NAMES)
+    last = random.choice(LAST_NAMES)
+    email = f"{first.lower()}{last.lower()}{random.randint(1, 99)}@{random.choice(EMAIL_DOMAINS)}"
+    if email in used_emails:
+        continue  # collision: skip it and generate another person
+    used_emails.add(email)
+
+    # adopters live anywhere, but more of them in bigger cities
+    city = random.choices(CITIES, weights=CITY_WEIGHTS)[0]
+    address = f"{random.randint(100, 9999)} {random.choice(ROAD_NAMES)}, {city}, LA"
+    adopters.append((email, first, last, address, random_phone(city)))
+
+conn.executemany(
+    "INSERT INTO Adopter (Email, FirstName, LastName, Address, PhoneNumber) VALUES (?, ?, ?, ?, ?)", adopters
+)
+
+adopter_emails = [a[0] for a in adopters]  # the Application section picks from these
+
 conn.commit()
 conn.close()
 
-print(f"\nShelters: {len(shelters)}\n")
+print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\n")
