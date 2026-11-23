@@ -20,6 +20,10 @@ STEM_REUSE_CHANCE = 0.2  # chance a shelter reuses a stem another city already h
 NUM_ADOPTERS = 300
 MAX_APPS_PER_ADOPTER = 3
 HISTORICAL_TRANSFER_SHARE = 0.12  # of adopted pets that were transferred before adoption
+DENIED_BEFORE_CHANCE = 0.2  # chance a Pending/Adopted pet also has an earlier Denied application
+DENIED_AVAILABLE_CHANCE = 0.1  # chance an Available pet has one Denied application
+SENIOR_AGE = 8  # pets this old (years) at adoption get half-price fees
+ADOPTION_FEES = {"Dog": 150.0, "Cat": 100.0, "Rabbit": 50.0, "Bird": 40.0}
 
 # ---------- word lists ----------
 FIRST_NAMES = [
@@ -821,7 +825,7 @@ pet_moves = {p[0]: [] for p in pets}  # pet ID -> list of (date, from_shelter, t
 def current_shelter(p_id):
     """The shelter holding the pet after all its transfers."""
     moves = pet_moves[p_id]
-    return moves[-1][-2] if moves else pet_intake_shelter[p_id]
+    return moves[-1][2] if moves else pet_intake_shelter[p_id]
 
 
 def shelter_at(p_id, day):
@@ -878,9 +882,73 @@ moved = [(current_shelter(p_id), p_id) for p_id, moves in pet_moves.items() if m
 conn.executemany("UPDATE Pet SET Shelter_ID = ? WHERE ID = ?", moved)
 pets = [(p[0], current_shelter(p[0])) + p[2:] for p in pets]
 
+# ---------- application ----------
+app_count = {email: 0 for email in adopter_emails}  # applications per adopter so far
+
+
+def pick_adopter(applicants):
+    """An adopter with room for another application who hasn't applied for this pet yet."""
+    choices = [e for e in adopter_emails if app_count[e] < MAX_APPS_PER_ADOPTER and e not in applicants]
+    email = random.choice(choices)
+    app_count[email] += 1
+    applicants.add(email)
+    return email
+
+
+app_rows = []  # (date, pet ID, adopter email, handling shelter, status); IDs are assigned after sorting by date
+
+
+def add_application(p_id, day, status, applicants):
+    app_rows.append((day, p_id, pick_adopter(applicants), shelter_at(p_id, day), status))
+
+
+for p in pets:
+    p_id, pet_status, taken_in = p[0], p[7], date.fromisoformat(p[8])
+    moves = pet_moves[p_id]
+    settled = moves[-1][0] + timedelta(days=1) if moves else taken_in  # arrived at its final shelter
+    applicants = set()  # adopters who already applied for this pet
+
+    if pet_status in ("Adopted", "Pending"):
+        # the application that made the pet Pending/Adopted comes after its last transfer;
+        # Adopted pets need room after it for the adoption itself
+        latest = TODAY - timedelta(days=15) if pet_status == "Adopted" else TODAY
+        main_day = random_date(settled, latest)
+        if random.random() < DENIED_BEFORE_CHANCE and main_day > taken_in:
+            add_application(p_id, random_date(taken_in, main_day - timedelta(days=1)), "Denied", applicants)
+        add_application(p_id, main_day, "Approved" if pet_status == "Adopted" else "Pending", applicants)
+    elif random.random() < DENIED_AVAILABLE_CHANCE:
+        add_application(p_id, random_date(taken_in, TODAY), "Denied", applicants)
+
+# number applications in date order, like a real system handing out IDs as they arrive
+app_rows.sort(key=lambda row: row[0])
+applications = [
+    (a_id, p_id, email, s_id, status, day.isoformat())
+    for a_id, (day, p_id, email, s_id, status) in zip(make_ids(len(app_rows)), app_rows)
+]
+conn.executemany(
+    "INSERT INTO Application (ID, Pet_ID, Adopter_Email, Shelter_ID, Status, Date) VALUES (?, ?, ?, ?, ?, ?)",
+    applications,
+)
+
+# ---------- adoption ----------
+pet_by_id = {p[0]: p for p in pets}
+adoptions = []
+adoption_day = {}  # pet ID -> adoption date (MedicalRecords needs it: no vet visits after a pet leaves)
+for a_id, p_id, _, _, status, day in applications:
+    if status != "Approved":
+        continue
+    adopted_on = min(date.fromisoformat(day) + timedelta(days=random.randint(1, 14)), TODAY)
+    species, birth = pet_by_id[p_id][3], date.fromisoformat(pet_by_id[p_id][5])
+    fee = ADOPTION_FEES[species]
+    if (adopted_on - birth).days >= SENIOR_AGE * 365:
+        fee /= 2
+    adoptions.append((a_id, adopted_on.isoformat(), fee))
+    adoption_day[p_id] = adopted_on
+conn.executemany("INSERT INTO Adoption (Application_ID, Date, Fee) VALUES (?, ?, ?)", adoptions)
+
 
 conn.commit()
 conn.close()
 
 print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\nStaff: {len(staff)}")
-print(f"Transfers: {len(transfers)}\n")
+print(f"Transfers: {len(transfers)}\nApplications: {len(applications)}\nAdoptions: {len(adoptions)}\n")
