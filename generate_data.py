@@ -1,5 +1,6 @@
 import sqlite3
 import random
+import re
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -767,7 +768,38 @@ conn.executemany(
 )
 
 
+# ---------- staff ----------
+shelter_slugs = {s[0]: re.sub(r"[^a-z0-9]+", "-", s[1].lower()).strip("-") for s in shelters}
+shelter_city = {s[0]: s[3] for s in shelters}
+
+# every shelter gets one of each role; bigger shelters get an extra Intake (20+) and an extra Vet (25+)
+staff_roles = []
+for s in shelters:
+    s_id, capacity = s[0], s[6]
+    roles = ["Intake", "Vet", "Coordinator"]
+    if capacity >= 20:
+        roles.append("Intake")
+    if capacity >= 25:
+        roles.append("Vet")
+    staff_roles += [(s_id, role) for role in roles]
+
+staff = []
+used_staff_emails = set()
+vets_at = {s_id: [] for s_id in shelter_ids}  # shelter -> its vets' IDs (MedicalRecords picks from these)
+for st_id, (s_id, role) in zip(make_ids(len(staff_roles)), staff_roles):
+    while True:
+        first, last = random.choice(FIRST_NAMES), random.choice(LAST_NAMES)
+        email = f"{first.lower()}.{last.lower()}@{shelter_slugs[s_id]}.org"
+        if email not in used_staff_emails:
+            break
+    used_staff_emails.add(email)
+    staff.append((st_id, s_id, f"{first} {last}", role, email, random_phone(shelter_city[s_id])))
+    if role == "Vet":
+        vets_at[s_id].append(st_id)
+
+conn.executemany("INSERT INTO Staff (ID, Shelter_ID, Name, Role, Email, PhoneNumber) VALUES (?, ?, ?, ?, ?, ?)", staff)
+
 conn.commit()
 conn.close()
 
-print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\n")
+print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\nStaff: {len(staff)}\n")
