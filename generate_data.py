@@ -19,6 +19,7 @@ MAX_STEM_USES = 2  # a stem can appear on at most this many shelters
 STEM_REUSE_CHANCE = 0.2  # chance a shelter reuses a stem another city already has
 NUM_ADOPTERS = 300
 MAX_APPS_PER_ADOPTER = 3
+HISTORICAL_TRANSFER_SHARE = 0.12  # of adopted pets that were transferred before adoption
 
 # ---------- word lists ----------
 FIRST_NAMES = [
@@ -582,7 +583,6 @@ PET_NAMES = [
     "Remy",
     "Beau",
 ]
-
 # species -> (weight, max age in years, breeds)
 SPECIES = {
     "Dog": (
@@ -625,6 +625,13 @@ SPECIES = {
 }
 PET_STATUSES = ["Available", "Pending", "Adopted"]
 PET_STATUS_WEIGHTS = [40, 25, 35]
+TRANSFER_REASONS = [
+    "Overcrowding",
+    "Medical Care",
+    "Better Adoption Chances",
+    "Behavioral Training",
+    "Foster Program",
+]
 
 
 # ---------- helpers ----------
@@ -799,7 +806,81 @@ for st_id, (s_id, role) in zip(make_ids(len(staff_roles)), staff_roles):
 
 conn.executemany("INSERT INTO Staff (ID, Shelter_ID, Name, Role, Email, PhoneNumber) VALUES (?, ?, ?, ?, ?, ?)", staff)
 
+
+# ---------- transfer ----------
+capacity_of = {s[0]: s[6] for s in shelters}
+housed = {s_id: 0 for s_id in shelter_ids}  # pets currently in each shelter (Adopted pets have left)
+for p in pets:
+    if p[7] != "Adopted":
+        housed[p[1]] += 1
+
+pet_intake_shelter = {p[0]: p[1] for p in pets}
+pet_moves = {p[0]: [] for p in pets}  # pet ID -> list of (date, from_shelter, to_shelter), oldest first
+
+
+def current_shelter(p_id):
+    """The shelter holding the pet after all its transfers."""
+    moves = pet_moves[p_id]
+    return moves[-1][-2] if moves else pet_intake_shelter[p_id]
+
+
+def shelter_at(p_id, day):
+    """The shelter that held the pet on a given day (a date object)."""
+    shelter = pet_intake_shelter[p_id]
+    for move_day, _, to_shelter in pet_moves[p_id]:
+        if move_day <= day:
+            shelter = to_shelter
+    return shelter
+
+
+transfers = []
+
+
+def record_transfer(p_id, day, to_shelter, reason):
+    from_shelter = current_shelter(p_id)
+    pet_moves[p_id].append((day, from_shelter, to_shelter))
+    transfers.append((p_id, from_shelter, to_shelter, day.isoformat(), reason))
+
+
+# 1) recent transfers out of overcrowded shelters, into shelters with free space
+for s_id in shelter_ids:
+    over = housed[s_id] - capacity_of[s_id]
+    if over <= 0:
+        continue
+    candidates = [p for p in pets if p[1] == s_id and p[7] == "Available"]
+    for p in random.sample(candidates, min(over, random.randint(2, 4), len(candidates))):
+        open_shelters = [t for t in shelter_ids if t != s_id and housed[t] < capacity_of[t]]
+        to_shelter = random.choice(open_shelters)
+        start = max(date.fromisoformat(p[8]), TODAY - timedelta(days=60))
+        record_transfer(p[0], random_date(start, TODAY), to_shelter, "Overcrowding")
+        housed[s_id] -= 1
+        housed[to_shelter] += 1
+
+# 2) for past transfers of pets that were later adopted (1 or 2 moves, all before TODAY - 20 days
+# so the application and adoption can come after the last move)
+adopted_pets = [p for p in pets if p[7] == "Adopted"]
+for p in random.sample(adopted_pets, round(len(adopted_pets) * HISTORICAL_TRANSFER_SHARE)):
+    day = date.fromisoformat(p[8])
+    latest = TODAY - timedelta(days=20)
+    for _ in range(2 if random.random() < 0.2 else 1):
+        if day + timedelta(days=1) > latest:
+            break
+        day = random_date(day + timedelta(days=1), latest)
+        to_shelter = random.choice([t for t in shelter_ids if t != current_shelter(p[0])])
+        record_transfer(p[0], day, to_shelter, random.choice(TRANSFER_REASONS))
+
+conn.executemany(
+    "INSERT INTO Transfer (Pet_ID, From_Shelter_ID, To_Shelter_ID, Date, Reason) VALUES (?, ?, ?, ?, ?)", transfers
+)
+
+# a transfer changes where the pet is: update Pet.Shelter_ID, and keep the Python copy in sync
+moved = [(current_shelter(p_id), p_id) for p_id, moves in pet_moves.items() if moves]
+conn.executemany("UPDATE Pet SET Shelter_ID = ? WHERE ID = ?", moved)
+pets = [(p[0], current_shelter(p[0])) + p[2:] for p in pets]
+
+
 conn.commit()
 conn.close()
 
-print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\nStaff: {len(staff)}\n")
+print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\nStaff: {len(staff)}")
+print(f"Transfers: {len(transfers)}\n")
