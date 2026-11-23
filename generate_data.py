@@ -24,6 +24,7 @@ DENIED_BEFORE_CHANCE = 0.2  # chance a Pending/Adopted pet also has an earlier D
 DENIED_AVAILABLE_CHANCE = 0.1  # chance an Available pet has one Denied application
 SENIOR_AGE = 8  # pets this old (years) at adoption get half-price fees
 ADOPTION_FEES = {"Dog": 150.0, "Cat": 100.0, "Rabbit": 50.0, "Bird": 40.0}
+VISIT_COUNT_WEIGHTS = [40, 30, 20, 10]  # chance of 1, 2, 3 or 4 vet visits per pet
 
 # ---------- word lists ----------
 FIRST_NAMES = [
@@ -637,6 +638,60 @@ TRANSFER_REASONS = [
     "Foster Program",
 ]
 
+VACCINATION_STATUSES = ["Not Vaccinated", "Partial", "Up to Date"]
+
+TREATMENTS = {
+    "Dog": [
+        "Rabies vaccine",
+        "DHPP vaccine",
+        "Bordetella vaccine",
+        "Deworming",
+        "Flea and tick treatment",
+        "Heartworm test",
+        "Microchip implant",
+        "Spay/neuter surgery",
+        "Dental cleaning",
+        "Antibiotics for skin infection",
+    ],
+    "Cat": [
+        "Rabies vaccine",
+        "FVRCP vaccine",
+        "FeLV/FIV test",
+        "Deworming",
+        "Flea treatment",
+        "Microchip implant",
+        "Spay/neuter surgery",
+        "Dental cleaning",
+        "Ear mite treatment",
+    ],
+    "Rabbit": [
+        "RHDV2 vaccine",
+        "Nail trim",
+        "Spay/neuter surgery",
+        "Dental check",
+        "Parasite treatment",
+    ],
+    "Bird": [
+        "Beak and nail trim",
+        "Psittacosis test",
+        "Parasite treatment",
+        "Vitamin supplement",
+        "Feather condition check",
+    ],
+}
+
+VISIT_NOTES = [
+    "Healthy, good weight",
+    "Mildly underweight; increase feeding",
+    "Shy but cooperative during exam",
+    "Minor skin irritation",
+    "Recovering well",
+    "Cleared for adoption",
+    "Recheck in two weeks",
+    "Mild dental tartar noted",
+    "Energetic and friendly",
+]
+
 
 # ---------- helpers ----------
 def make_ids(n):
@@ -946,9 +1001,48 @@ for a_id, p_id, _, _, status, day in applications:
     adoption_day[p_id] = adopted_on
 conn.executemany("INSERT INTO Adoption (Application_ID, Date, Fee) VALUES (?, ?, ?)", adoptions)
 
+# ---------- medical records ----------
+medical_records = []
+for p in pets:
+    p_id, species, taken_in = p[0], p[3], date.fromisoformat(p[8])
+    last_day = adoption_day.get(p_id, TODAY)  # no visits after the pet goes home
+
+    # first visit is the intake exam within 3 days of arrival; later visits fall anywhere after it
+    first_visit = min(taken_in + timedelta(days=random.randint(0, 3)), last_day)
+    n_visits = random.choices([1, 2, 3, 4], weights=VISIT_COUNT_WEIGHTS)[0]
+    visit_days = sorted([first_visit] + [random_date(first_visit, last_day) for _ in range(n_visits - 1)])
+
+    # give each visit a time; (date, time) must be unique per pet because it's part of the primary key
+    visits = set()
+    for day in visit_days:
+        while True:
+            visit_time = f"{random.randint(8, 16):02d}:{random.choice(['00', '15', '30', '45'])}"
+            if (day, visit_time) not in visits:
+                break
+        visits.add((day, visit_time))
+
+    vaccination_level = random.choices([0, 1, 2], weights=[40, 30, 30])[0]  # index into VACCINATION_STATUSES
+    for i, (day, visit_time) in enumerate(sorted(visits)):  # oldest first, including same-day visits
+        if i > 0 and vaccination_level < 2 and random.random() < 0.7:
+            vaccination_level += 1  # follow-up visits usually catch vaccinations up; never goes backward
+
+        treatments = "; ".join(random.sample(TREATMENTS[species], random.randint(1, 2)))
+        notes = "Intake exam" if i == 0 else random.choice(VISIT_NOTES + [None])
+        vet_id = random.choice(vets_at[shelter_at(p_id, day)])  # a vet at the shelter holding the pet that day
+        medical_records.append(
+            (p_id, day.isoformat(), visit_time, VACCINATION_STATUSES[vaccination_level], notes, treatments, vet_id)
+        )
+
+conn.executemany(
+    "INSERT INTO MedicalRecords (Pet_ID, Date, Time, VaccinationStatus, Notes, Treatments, Vet_ID) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+    medical_records,
+)
+
 
 conn.commit()
 conn.close()
 
 print(f"\nShelters: {len(shelters)}\nAdopters: {len(adopters)}\nPets: {len(pets)}\nStaff: {len(staff)}")
-print(f"Transfers: {len(transfers)}\nApplications: {len(applications)}\nAdoptions: {len(adoptions)}\n")
+print(f"Transfers: {len(transfers)}\nApplications: {len(applications)}\nAdoptions: {len(adoptions)}")
+print(f"Medical records: {len(medical_records)}\n")
