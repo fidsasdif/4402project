@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Adoption Center Network</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+/* Colours are CSS variables so light and dark mode only change the values. */
+:root {
+  --bg:#faf7f2;
+  --card:#fff;
+  --tx:#2a2622;
+  --mu:#6f675e;
+  --bd:#e4ddd2;
+  --ac:#c2571a;
+  --ac2:#fbe9dc;
+  --ok:#2f7d4f;
+  --bad:#b3261e;
+  --sf:#f3eee6;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+    --bg:#1c1a17;
+    --card:#262320;
+    --tx:#f1ece4;
+    --mu:#a69d91;
+    --bd:#3a352f;
+    --ac:#f08a4b;
+    --ac2:#3a2a1f;
+    --ok:#6fcf97;
+    --bad:#f2867f;
+    --sf:#2e2a26;
+    color-scheme: dark;
+  }
+}
+:root[data-theme=dark] {
+  --bg:#1c1a17;
+  --card:#262320;
+  --tx:#f1ece4;
+  --mu:#a69d91;
+  --bd:#3a352f;
+  --ac:#f08a4b;
+  --ac2:#3a2a1f;
+  --ok:#6fcf97;
+  --bad:#f2867f;
+  --sf:#2e2a26;
+  color-scheme: dark;
+}
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tx);
+  font:
+    15px/1.45 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+header {
+  padding: 14px 16px 0;
+  max-width: 1000px;
+  margin: auto;
+}
+h1 {
+  font: 700 21px Georgia, serif;
+  margin: 0 0 2px;
+}
+.sub {
+  color: var(--mu);
+  font-size: 13px;
+}
+.roles,
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: var(--tx);
+}
+.pill {
+  border: 1px solid var(--bd);
+  background: var(--card);
+  border-radius: 20px;
+  padding: 6px 13px;
+  cursor: pointer;
+}
+.pill.on {
+  background: var(--ac);
+  color: #fff;
+  border-color: var(--ac);
+}
+.tabs .pill {
+  border-radius: 8px;
+  background: transparent;
+}
+.tabs .pill.on {
+  background: var(--ac2);
+  color: var(--ac);
+  border-color: var(--ac);
+}
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 14px 16px 90px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+.card,
+.panel {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  padding: 14px;
+}
+.panel {
+  margin-bottom: 14px;
+}
+.card h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.mu {
+  color: var(--mu);
+  font-size: 13px;
+}
+.emo {
+  font-size: 34px;
+}
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  border-radius: 10px;
+  padding: 1px 8px;
+  background: var(--sf);
+  margin-right: 4px;
+}
+.tag.ok {
+  color: var(--ok);
+}
+.tag.bad {
+  color: var(--bad);
+}
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-bottom: 10px;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--mu);
+  gap: 3px;
+  flex: 1;
+  min-width: 130px;
+}
+input,
+select,
+textarea {
+  border: 1px solid var(--bd);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px;
+}
+.btn {
+  background: var(--ac);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.btn.g {
+  background: transparent;
+  color: var(--tx);
+  border: 1px solid var(--bd);
+}
+.btn.r {
+  background: var(--bad);
+}
+.tw {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+th,
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--bd);
+  white-space: nowrap;
+}
+th {
+  color: var(--mu);
+  font-weight: 600;
+  font-size: 12px;
+}
+.bar {
+  height: 8px;
+  background: var(--sf);
+  border-radius: 5px;
+  min-width: 90px;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.bar i.bad {
+  background: var(--bad);
+}
+h2 {
+  font: 600 17px Georgia, serif;
+  margin: 0 0 10px;
+}
+#toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  background: var(--tx);
+  color: var(--bg);
+  padding: 9px 16px;
+  border-radius: 10px;
+  display: none;
+  z-index: 9;
+  max-width: 90%;
+}
+details {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--bd);
+  padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px));
+  font-size: 12px;
+}
+summary {
+  cursor: pointer;
+  color: var(--mu);
+}
+pre {
+  margin: 6px 0 0;
+  max-height: 120px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 11px;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🐾 Shelter Network</h1>
+  <div class="roles" id="roles"></div> <!-- role buttons, filled by renderNav() -->
+  <div class="tabs" id="tabs"></div>   <!-- tabs for the chosen role -->
+</header>
+
+<main id="main"><p class="mu">Loading…</p></main> <!-- the current screen -->
+<div id="toast"></div>                            <!-- short success/error messages -->
+
+<details>
+  <summary>SQL log (last statements run)</summary>
+  <pre id="log"></pre>
+</details>
+
+<script>
+
+// ---- Shared helpers and UI state ----
+const qs = (s) => document.querySelector(s), today = () => (new Date()).toISOString().slice(0, 10);
+const escapeHtml = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const SPECIES_EMOJI = { Dog: "🐶", Cat: "🐱", Rabbit: "🐰", Bird: "🐦" };
+let state = { role: "adopter", tab: "browse", apply: null, pet: null, f: { sp: "", city: "", q: "" } }, sqlLog = [];
+// ---- Talking to the server ----
+// Requests are synchronous so each screen can be built with plain function calls.
+// Inside runTransaction() writes are queued, then sent together so they commit or fail as one.
+let pendingStatements = null;
+const postJson = (u, b) => {
+  const x = new XMLHttpRequest();
+  x.open("POST", u, false);
+  x.setRequestHeader("Content-Type", "application/json");
+  x.send(JSON.stringify(b));
+  const r = JSON.parse(x.responseText);
+  if (x.status != 200) throw new Error(r.error);
+  return r;
+};
+const logSql = (q, p) => {
+  sqlLog.unshift(q.replace(/\s+/g, " ").trim() + (p.length ? "  -- " + JSON.stringify(p) : ""));
+  if (sqlLog.length > 25) sqlLog.length = 25;
+  qs("#log").textContent = sqlLog.join("\n");
+};
+const writeSql = (q, p = []) => {
+  logSql(q, p);
+  if (pendingStatements) {
+    pendingStatements.push([q, p]);
+    return true;
+  }
+  try {
+    postJson("/api/exec", { stmts: [[q, p]] });
+    return true;
+  } catch (x) {
+    toast("Not saved: " + x.message);
+    x.shown = 1;
+    throw x;
+  }
+};
+const querySql = (q, p = []) => postJson("/api/query", { sql: q, params: p }).rows;
+const runTransaction = (f) => {
+  pendingStatements = [];
+  try {
+    f();
+    const b = pendingStatements;
+    pendingStatements = null;
+    postJson("/api/exec", { stmts: b });
+    return true;
+  } catch (x) {
+    pendingStatements = null;
+    toast("Not saved: " + x.message);
+    return false;
+  }
+};
+const toast = (m) => {
+  const t = qs("#toast");
+  t.textContent = m;
+  t.style.display = "block";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.style.display = "none", 3500);
+};
+// ---- Which tabs each role sees: [tab key, label] ----
+const TABS = { adopter: [["browse", "Find a pet"], ["mine", "My applications"]], staff: [["network", "Shelters & capacity"], ["intake", "Intake"], ["transfer", "Transfer"], ["staff", "Staff"]], coord: [["apps", "Applications"], ["done", "Adoptions"]], vet: [["records", "Medical records"]] };
+const ROLES = { adopter: "Adopter", staff: "General staff", coord: "Adoption coordinator", vet: "Vet" };
+// ---- Query helpers and small formatting functions ----
+// Every shelter with how many animals it currently holds (adopted pets no longer count).
+const shelterOccupancy = () => querySql(`SELECT s.*,(SELECT COUNT(*) FROM Pet p WHERE p.Shelter_ID=s.ID AND p.AdoptionStatus!='Adopted') n FROM Shelter s ORDER BY n*1.0/s.Capacity DESC,s.Name`);
+// <option> tags for a <select>: valueKey is the column used as the value, label is a column name or a function.
+const optionTags = (rows, valueKey, label, selected) => rows.map((r) => `<option value="${escapeHtml(r[valueKey])}"${r[valueKey] == selected ? " selected" : ""}>${escapeHtml(typeof label == "function" ? label(r) : r[label])}</option>`).join("");
+const ageLabel = (b) => {
+  if (!b) return "?";
+  const y = (new Date()).getFullYear() - +b.slice(0, 4);
+  return y < 1 ? "<1 yr" : y + " yr";
+};
+function renderNav() {
+  qs("#roles").innerHTML = Object.entries(ROLES).map(([k, v2]) => `<button class="pill${state.role == k ? " on" : ""}" data-a="role" data-v="${k}">${v2}</button>`).join("");
+  qs("#tabs").innerHTML = TABS[state.role].map(([k, v2]) => `<button class="pill${state.tab == k ? " on" : ""}" data-a="tab" data-v="${k}">${v2}</button>`).join("");
+}
+// ---- Screens: one function per tab, each returns an HTML string ----
+const views = {
+  // Adopter: search every shelter's available pets and start an application
+  browse() {
+    const f = state.f, w = ["p.AdoptionStatus='Available'"], p = [];
+    if (f.sp) {
+      w.push("p.Species=?");
+      p.push(f.sp);
+    }
+    if (f.city) {
+      w.push("s.City=?");
+      p.push(f.city);
+    }
+    if (f.q) {
+      w.push("(p.Name LIKE ? OR p.Breed LIKE ?)");
+      p.push("%" + f.q + "%", "%" + f.q + "%");
+    }
+    const pets = querySql(`SELECT p.*,s.Name sn,s.City FROM Pet p JOIN Shelter s ON s.ID=p.Shelter_ID WHERE ${w.join(" AND ")} ORDER BY p.DateTakenIn DESC LIMIT 60`, p);
+    const sp = querySql("SELECT DISTINCT Species x FROM Pet"), ci = querySql("SELECT DISTINCT City x FROM Shelter");
+    let h = `<div class="panel">
+      <div class="row">
+      <label>Search<input id="fq" value="${escapeHtml(f.q)}" placeholder="Name or breed"></label>
+      <label>Species<select id="fsp">
+      <option value="">All</option>${optionTags(sp, "x", "x", f.sp)}</select></label>
+      <label>City<select id="fci">
+      <option value="">All shelters</option>${optionTags(ci, "x", "x", f.city)}</select></label>
+      <button class="btn" data-a="filter">Search</button></div></div>`;
+    if (state.apply) {
+      const p2 = querySql("SELECT p.*,s.Name sn FROM Pet p JOIN Shelter s ON s.ID=p.Shelter_ID WHERE p.ID=?", [state.apply])[0];
+      h += `<div class="panel">
+      <h2>Apply to adopt ${escapeHtml(p2.Name)}</h2>
+      <p class="mu">Handled by ${escapeHtml(p2.sn)}. Your email is your network-wide profile.</p>
+      <div class="row">
+      <label>Email<input id="ae" type="email"></label>
+      <label>First name<input id="af"></label>
+      <label>Last name<input id="al"></label></div>
+      <div class="row">
+      <label>Address<input id="aa"></label>
+      <label>Phone<input id="ap"></label></div>
+      <button class="btn" data-a="submitApp">Submit application</button> 
+      <button class="btn g" data-a="cancel">Cancel</button></div>`;
+    }
+    h += `<p class="mu">Showing ${pets.length} available pet${pets.length == 1 ? "" : "s"}, newest first (max 60 – use the filters to narrow)</p>
+      <div class="grid">` + pets.map((p2) => `<div class="card">
+      <div class="emo">${SPECIES_EMOJI[p2.Species] || "🐾"}</div><h3>${escapeHtml(p2.Name)}</h3>
+      <div class="mu">${escapeHtml(p2.Breed)} · ${escapeHtml(p2.Sex)} · ${ageLabel(p2.BirthDate)}</div>
+      <p><span class="tag">${escapeHtml(p2.sn)}</span><span class="tag">${escapeHtml(p2.City)}</span></p>
+      <button class="btn" data-a="apply" data-v="${p2.ID}">Apply</button></div>`).join("") + "</div>";
+    return h;
+  },
+  // Adopter: look up your applications by email
+  mine() {
+    const e = state.email || "";
+    let h = `<div class="panel">
+      <div class="row">
+      <label>Your email<input id="me" value="${escapeHtml(e)}" type="email"></label>
+      <button class="btn" data-a="lookup">Look up</button></div></div>`;
+    if (e) {
+      const r = querySql(`SELECT a.ID,a.Date,a.Status,p.Name,s.Name sn FROM Application a JOIN Pet p ON p.ID=a.Pet_ID JOIN Shelter s ON s.ID=a.Shelter_ID WHERE a.Adopter_Email=? ORDER BY a.Date DESC`, [e]);
+      h += r.length ? renderTable(["#", "Pet", "Shelter", "Date", "Status"], r.map((x) => [x.ID, x.Name, x.sn, x.Date, statusBadge(x.Status)])) : '<p class="mu">No applications for that email.</p>';
+    }
+    return h;
+  },
+  // Staff: capacity of every shelter, most crowded first
+  network() {
+    const o = shelterOccupancy();
+    return `<div class="panel">
+      <h2>Capacity across the network</h2>` + renderTable(["Shelter", "City", "Phone", "Held / capacity", "Load", "Status"], o.map((s) => {
+      const pc = Math.min(100, s.n / s.Capacity * 100);
+      return [s.Name, s.City + ", " + s.State, s.PhoneNumber, s.n + " / " + s.Capacity, `<div class="bar"><i class="${s.n > s.Capacity ? "bad" : ""}" style="width:${pc}%"></i></div>`, s.n > s.Capacity ? '<span class="tag bad">Over capacity</span>' : s.n == s.Capacity ? '<span class="tag">Full</span>' : '<span class="tag ok">Has room (' + (s.Capacity - s.n) + ")</span>"];
+    })) + "</div>";
+  },
+  // Staff: record a new animal arriving at a shelter
+  intake() {
+    const sh = querySql("SELECT * FROM Shelter");
+    return `<div class="panel">
+      <h2>Record a new animal</h2>
+      <div class="row">
+      <label>Shelter<select id="ish">${optionTags(sh, "ID", "Name")}</select></label>
+      <label>Name<input id="inm"></label>
+      <label>Species<select id="isp">
+      <option>Dog</option>
+      <option>Cat</option>
+      <option>Rabbit</option>
+      <option>Bird</option></select></label>
+      <label>Breed<input id="ibr"></label></div>
+      <div class="row">
+      <label>Birth date<input id="ibd" type="date"></label>
+      <label>Sex<select id="isx">
+      <option>Female</option>
+      <option>Male</option></select></label>
+      <label>Date taken in<input id="idt" type="date" value="${today()}"></label></div>
+      <button class="btn" data-a="intake">Add animal</button></div>`;
+  },
+  // Staff: move an animal to another shelter and review recent transfers
+  transfer() {
+    const o = shelterOccupancy();
+    if (!state.tf) state.tf = o[0].ID;
+    const pets = querySql(`SELECT ID,Name,Species FROM Pet WHERE Shelter_ID=? AND AdoptionStatus!='Adopted' ORDER BY Name`, [state.tf]);
+    const hist = querySql(`SELECT t.Date,p.Name,f.Name a,s.Name b,t.Reason FROM Transfer t JOIN Pet p ON p.ID=t.Pet_ID JOIN Shelter f ON f.ID=t.From_Shelter_ID JOIN Shelter s ON s.ID=t.To_Shelter_ID ORDER BY t.Date DESC LIMIT 50`);
+    return `<div class="panel">
+      <h2>Transfer an animal</h2>
+      <div class="row">
+      <label>From shelter<select id="tf" data-a="tfrom">${optionTags(o, "ID", "Name", state.tf)}</select></label>
+      <label>Animal<select id="tp">${optionTags(pets, "ID", (r) => r.Name + " · " + r.Species + " #" + r.ID)}</select></label>
+      <label>Destination<select id="tt">${optionTags(o, "ID", (r) => r.Name + " – " + r.n + "/" + r.Capacity)}</select></label>
+      <label>Reason<input id="tr" placeholder="e.g. overcrowding"></label></div>
+      <button class="btn" data-a="transfer">Transfer</button></div>
+      <div class="panel">
+      <h2>Recent transfers (latest 50)</h2>` + (hist.length ? renderTable(["Date", "Animal", "From", "To", "Reason"], hist.map((h) => [h.Date, h.Name, h.a, h.b, h.Reason])) : '<p class="mu">No transfers yet.</p>') + "</div>";
+  },
+  // Coordinator: pending applications to approve (with a fee) or deny
+  apps() {
+    const r = querySql(`SELECT a.ID,a.Date,a.Status,p.Name pn,p.Species,p.BirthDate bd,ad.FirstName||' '||ad.LastName who,ad.Email,s.Name sn FROM Application a JOIN Pet p ON p.ID=a.Pet_ID JOIN Adopter ad ON ad.Email=a.Adopter_Email JOIN Shelter s ON s.ID=a.Shelter_ID WHERE a.Status='Pending' ORDER BY a.Date LIMIT 100`);
+    return `<div class="panel">
+      <h2>Pending applications</h2>` + (r.length ? `<div class="tw">
+      <table>
+      <tr><th>#</th><th>Pet</th><th>Applicant</th><th>Shelter</th><th>Date</th><th>Fee ($)</th><th></th></tr>` + r.map((x) => `<tr><td>${x.ID}</td><td>${escapeHtml(x.pn)}</td><td>${escapeHtml(x.who)}
+      <div class="mu">${escapeHtml(x.Email)}</div></td><td>${escapeHtml(x.sn)}</td><td>${x.Date}</td><td><input id="fee${x.ID}" type="number" value="${defaultFee(x)}" style="width:80px"></td><td>
+      <button class="btn" data-a="approve" data-v="${x.ID}">Approve</button> 
+      <button class="btn r" data-a="deny" data-v="${x.ID}">Deny</button></td></tr>`).join("") + "</table></div>" : '<p class="mu">Nothing waiting for review.</p>') + "</div>";
+  },
+  // Coordinator: completed adoptions
+  done() {
+    const r = querySql(`SELECT ad.Date,ad.Fee,p.Name,a.Adopter_Email e,s.Name sn FROM Adoption ad JOIN Application a ON a.ID=ad.Application_ID JOIN Pet p ON p.ID=a.Pet_ID JOIN Shelter s ON s.ID=a.Shelter_ID ORDER BY ad.Date DESC LIMIT 100`);
+    return `<div class="panel">
+      <h2>Completed adoptions</h2>` + (r.length ? renderTable(["Date", "Pet", "Adopter", "Shelter", "Fee"], r.map((x) => [x.Date, x.Name, x.e, x.sn, "$" + x.Fee])) : '<p class="mu">No adoptions recorded yet.</p>') + "</div>";
+  },
+  // Staff: directory, add staff, register a new shelter
+  staff() {
+    const sh = shelterOccupancy();
+    if (!state.ssh) state.ssh = sh[0].ID;
+    const st = querySql("SELECT * FROM Staff WHERE Shelter_ID=? ORDER BY Role,Name", [state.ssh]);
+    return `<div class="panel">
+      <h2>Staff directory</h2>
+      <div class="row">
+      <label>Shelter<select id="ssh" data-a="ssh">${optionTags(sh, "ID", "Name", state.ssh)}</select></label></div>` + renderTable(["Name", "Role", "Email", "Phone"], st.map((x) => [x.Name, x.Role, x.Email, x.PhoneNumber])) + `</div>
+      <div class="panel">
+      <h2>Add staff member to this shelter</h2>
+      <div class="row">
+      <label>Name<input id="sn"></label>
+      <label>Role<select id="sr">
+      <option>Intake</option>
+      <option>Vet</option>
+      <option>Coordinator</option></select></label>
+      <label>Email<input id="se" type="email"></label>
+      <label>Phone<input id="sp"></label></div>
+      <button class="btn" data-a="addStaff">Add staff member</button></div>
+      <div class="panel">
+      <h2>Register a shelter</h2>
+      <div class="row">
+      <label>Name<input id="rn"></label>
+      <label>Address<input id="ra"></label>
+      <label>City<input id="rc"></label>
+      <label>State<input id="rs" value="LA" maxlength="2"></label></div>
+      <div class="row">
+      <label>Phone<input id="rp"></label>
+      <label>Capacity<input id="rk" type="number" min="1"></label></div>
+      <button class="btn" data-a="addShelter">Register shelter</button></div>`;
+  },
+  // Vet: an animal's health history and a form for a new visit
+  records() {
+    const sh = shelterOccupancy();
+    if (!state.vsh) state.vsh = sh[0].ID;
+    const pets = querySql("SELECT ID,Name,Species FROM Pet WHERE Shelter_ID=? ORDER BY Name", [state.vsh]);
+    if (!pets.some((p) => p.ID == state.pet)) state.pet = pets.length ? pets[0].ID : null;
+    const vets = querySql("SELECT ID,Name FROM Staff WHERE Role='Vet' AND Shelter_ID=?", [state.vsh]);
+    const h = state.pet ? querySql("SELECT m.*,s.Name vn FROM MedicalRecords m LEFT JOIN Staff s ON s.ID=m.Vet_ID WHERE Pet_ID=? ORDER BY Date DESC,Time DESC", [state.pet]) : [];
+    return `<div class="panel">
+      <div class="row">
+      <label>Shelter<select id="vsh" data-a="vsh">${optionTags(sh, "ID", "Name", state.vsh)}</select></label>
+      <label>Animal<select id="vp" data-a="vpet">${optionTags(pets, "ID", (r) => r.Name + " · " + r.Species + " #" + r.ID, state.pet)}</select></label></div>
+      <h2>Health history</h2>` + (h.length ? renderTable(["Date", "Time", "Vet", "Vaccinations", "Treatments", "Notes"], h.map((m) => [m.Date, m.Time, m.vn, m.VaccinationStatus, m.Treatments, m.Notes])) : '<p class="mu">No visits recorded.</p>') + `</div>
+      <div class="panel">
+      <h2>Add visit</h2>
+      <div class="row">
+      <label>Vet<select id="vv">${optionTags(vets, "ID", "Name")}</select></label>
+      <label>Date<input id="vd" type="date" value="${today()}"></label>
+      <label>Time<input id="vt" type="time" value="${(new Date()).toTimeString().slice(0, 5)}"></label></div>
+      <div class="row">
+      <label>Vaccination status<select id="vs">
+      <option>Not Vaccinated</option>
+      <option>Partial</option>
+      <option>Up to Date</option></select></label>
+      <label>Treatments<input id="vr"></label></div>
+      <label>Notes<textarea id="vn" rows="2"></textarea></label><br>
+      <button class="btn" data-a="addRec">Save record</button></div>`;
+  }
+};
+const defaultFee = (x) => {
+  const b = { Dog: 150, Cat: 100, Rabbit: 50, Bird: 40 }[x.Species] || 75;
+  return (Date.now() - new Date(x.bd)) / 315576e5 >= 8 ? b / 2 : b;
+};
+const statusBadge = (s) => `<span class="tag ${s == "Approved" ? "ok" : s == "Denied" ? "bad" : ""}">${s}</span>`;
+const renderTable = (h, r) => `<div class="tw">
+      <table>
+      <tr>${h.map((x) => `<th>${x}</th>`).join("")}</tr>${r.map((x) => `<tr>${x.map((c) => `<td>${typeof c == "string" && c.startsWith("<") ? c : escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</table></div>`;
+const render = () => {
+  renderNav();
+  qs("#main").innerHTML = views[state.tab]();
+};
+const inputValue = (id) => (qs("#" + id) || {}).value?.trim() || "";
+// ---- Button handlers: validate the form, then write to the database ----
+const actions = {
+  tfrom() {
+    state.tf = +inputValue("tf");
+  },
+  vsh() {
+    state.vsh = +inputValue("vsh");
+  },
+  ssh() {
+    state.ssh = +inputValue("ssh");
+  },
+  addStaff() {
+    if (!inputValue("sn") || !inputValue("se")) return toast("Name and email are required");
+    writeSql("INSERT INTO Staff(Shelter_ID,Name,Role,Email,PhoneNumber) VALUES(?,?,?,?,?)", [state.ssh, inputValue("sn"), inputValue("sr"), inputValue("se"), inputValue("sp")]);
+    toast("Staff member added");
+  },
+  addShelter() {
+    const k = parseInt(inputValue("rk"));
+    if (!inputValue("rn") || !inputValue("ra") || !inputValue("rc") || !inputValue("rs") || !(k > 0)) return toast("Name, address, city, state and a capacity above 0 are required");
+    writeSql("INSERT INTO Shelter(Name,Address,City,State,PhoneNumber,Capacity) VALUES(?,?,?,?,?,?)", [inputValue("rn"), inputValue("ra"), inputValue("rc"), inputValue("rs"), inputValue("rp"), k]);
+    toast("Shelter registered");
+  },
+  role(x) {
+    state.role = x;
+    state.tab = TABS[x][0][0];
+  },
+  tab(x) {
+    state.tab = x;
+  },
+  apply(x) {
+    state.apply = +x;
+  },
+  cancel() {
+    state.apply = null;
+  },
+  filter() {
+    state.f = { q: inputValue("fq"), sp: inputValue("fsp"), city: inputValue("fci") };
+  },
+  lookup() {
+    state.email = inputValue("me");
+  },
+  vpet() {
+    state.pet = +inputValue("vp");
+  },
+  // Adopter submits an application (creates or updates their profile by email)
+  submitApp() {
+    const e = inputValue("ae"), f = inputValue("af"), l = inputValue("al");
+    if (!e || !f || !l || !inputValue("aa")) return toast("Email, name and address are required");
+    const p = querySql("SELECT * FROM Pet WHERE ID=?", [state.apply])[0];
+    if (p.AdoptionStatus != "Available") return toast("Sorry, that pet is no longer available");
+    if (runTransaction(() => {
+      writeSql(`INSERT INTO Adopter VALUES(?,?,?,?,?) ON CONFLICT(Email) DO UPDATE SET FirstName=excluded.FirstName,LastName=excluded.LastName,Address=excluded.Address,PhoneNumber=excluded.PhoneNumber`, [e, f, l, inputValue("aa"), inputValue("ap")]);
+      writeSql(`INSERT INTO Application(Pet_ID,Adopter_Email,Shelter_ID,Status,Date) VALUES(?,?,?,'Pending',?)`, [p.ID, e, p.Shelter_ID, today()]);
+    })) {
+      toast("Application submitted!");
+      state.apply = null;
+      state.email = e;
+      state.tab = "mine";
+    }
+  },
+  // Approve: record the adoption, mark the pet adopted, close other applications for that pet
+  approve(id) {
+    const fee2 = parseFloat(inputValue("fee" + id));
+    if (isNaN(fee2) || fee2 < 0) return toast("Enter a valid fee");
+    const a = querySql("SELECT * FROM Application WHERE ID=?", [id])[0], p = querySql("SELECT * FROM Pet WHERE ID=?", [a.Pet_ID])[0];
+    if (p.AdoptionStatus == "Adopted") return toast("This pet was already adopted");
+    if (runTransaction(() => {
+      writeSql("UPDATE Application SET Status='Approved' WHERE ID=?", [id]);
+      writeSql("INSERT INTO Adoption VALUES(?,?,?)", [id, today(), fee2]);
+      writeSql("UPDATE Pet SET AdoptionStatus='Adopted' WHERE ID=?", [p.ID]);
+      writeSql("UPDATE Application SET Status='Denied' WHERE Pet_ID=? AND ID!=? AND Status='Pending'", [p.ID, id]);
+    })) toast("Adoption recorded; other applicants for this pet were closed");
+  },
+  // Deny a single application
+  deny(id) {
+    writeSql("UPDATE Application SET Status='Denied' WHERE ID=?", [id]);
+    toast("Application denied");
+  },
+  // Add the new animal (asks before overfilling a shelter)
+  intake() {
+    if (!inputValue("inm")) return toast("Give the animal a name");
+    const sh = querySql("SELECT * FROM Shelter WHERE ID=?", [inputValue("ish")])[0], n = shelterOccupancy().find((s) => s.ID == sh.ID).n;
+    if (n >= sh.Capacity && !confirm(sh.Name + " is already at capacity. Add anyway?")) return;
+    writeSql(`INSERT INTO Pet(Shelter_ID,Name,Species,Breed,BirthDate,Sex,AdoptionStatus,DateTakenIn) VALUES(?,?,?,?,?,?,'Available',?)`, [sh.ID, inputValue("inm"), inputValue("isp"), inputValue("ibr"), inputValue("ibd") || null, inputValue("isx"), inputValue("idt")]);
+    toast("Animal recorded and visible network-wide");
+  },
+  // Move the pet and log the transfer; blocked if the destination is full
+  transfer() {
+    const p = querySql("SELECT * FROM Pet WHERE ID=?", [inputValue("tp")])[0], to = +inputValue("tt");
+    if (!p) return toast("No animal selected");
+    if (p.Shelter_ID == to) return toast("Pick a different shelter");
+    const d = shelterOccupancy().find((s) => s.ID == to);
+    if (d.n >= d.Capacity) return toast(d.Name + " has no room");
+    if (runTransaction(() => {
+      writeSql("INSERT INTO Transfer VALUES(?,?,?,?,?)", [p.ID, p.Shelter_ID, to, today(), inputValue("tr") || "Not given"]);
+      writeSql("UPDATE Pet SET Shelter_ID=? WHERE ID=?", [to, p.ID]);
+    })) toast(p.Name + " moved to " + d.Name);
+  },
+  // Vet saves a medical record
+  addRec() {
+    if (!state.pet || !inputValue("vv")) return toast("Pick an animal and a vet");
+    if (runTransaction(() => writeSql("INSERT INTO MedicalRecords VALUES(?,?,?,?,?,?,?)", [state.pet, inputValue("vd"), inputValue("vt"), inputValue("vs"), inputValue("vn"), inputValue("vr"), +inputValue("vv")]))) toast("Visit recorded");
+  }
+};
+// ---- Event wiring and start-up ----
+// One click listener handles every button that has a data-a (action) attribute.
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-a]");
+  if (!b || b.tagName == "SELECT") return;
+  try {
+    actions[b.dataset.a](b.dataset.v);
+  } catch (x) {
+    if (!x.shown) console.error(x);
+  }
+  render();
+});
+document.addEventListener("change", (e) => {
+  const a = e.target.dataset.a;
+  if (["vpet", "tfrom", "vsh", "ssh"].includes(a)) {
+    actions[a]();
+    render();
+  }
+});
+try {
+  render();
+} catch (x) {
+  qs("#main").textContent = "Could not reach the database server: " + x.message;
+}
+</script>
+</body>
+</html>
